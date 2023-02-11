@@ -37,6 +37,7 @@ module.exports = function (req, res, next) {
         })
 
     } catch (err) {
-      return callRes(res, responseError.TOKEN_IS_INVALID);
+        console.log('this err when verify token: ', err)
+        return callRes(res, responseError.TOKEN_IS_INVALID);
     }
 }

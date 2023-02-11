@@ -576,6 +576,8 @@ CAN_NOT_CONNECT_TO_DB khi khong xoa duoc post trong csdl
 Da delete ca comment di kem
 */
 router.post('/delete_post', verify, async (req, res) => {
+    console.log('delete post called')
+
     var { id } = req.query;
     var user = req.user;
 
@@ -593,7 +595,7 @@ router.post('/delete_post', verify, async (req, res) => {
 
     let post;
     try {
-        post = await Post.findById(id);
+        post = await Post.findById(id).populate('author');
     } catch (err) {
         if(err.kind == "ObjectId") {
             console.log("Sai id");
@@ -608,7 +610,7 @@ router.post('/delete_post', verify, async (req, res) => {
         return setAndSendResponse(res, responseError.POST_IS_NOT_EXISTED);
     }
 
-    if(post.author != user.id) {
+    if(post.author !== null && post.author != user.id) {
         console.log("Not Access");
         return setAndSendResponse(res, responseError.NOT_ACCESS);
     }
@@ -644,6 +646,7 @@ router.post('/delete_post', verify, async (req, res) => {
 
     try {
         const deletedPost = await Post.findByIdAndDelete(id);
+        console.log('delete post success')
         return res.status(200).send({
             code: "1000",
             message: "OK"
@@ -679,6 +682,7 @@ MAXIMUM_NUMBER_OF_IMAGES
 MAX_WORD_POST cua described
 */
 router.post('/edit_post', cpUpload, verify, async (req, res) => {
+    console.log('edit post api called')
     var { id, status, image_del, image_sort, described, auto_accept, auto_block } = req.query;
     var image, video;
     if(req.files) {
@@ -694,17 +698,21 @@ router.post('/edit_post', cpUpload, verify, async (req, res) => {
             console.log("image_del parse loi PARAMETER_TYPE_IS_INVALID");
             return setAndSendResponse(res, responseError.PARAMETER_VALUE_IS_INVALID);
         }
+
         if(!Array.isArray(image_del)) {
             console.log("image_del PARAMETER_TYPE_IS_INVALID");
             return setAndSendResponse(res, responseError.PARAMETER_VALUE_IS_INVALID);
         }
+
         for(const id_image_del of image_del) {
             if(typeof id_image_del !== "string") {
                 console.log("image_del element PARAMETER_TYPE_IS_INVALID");
                 return setAndSendResponse(res, responseError.PARAMETER_TYPE_IS_INVALID);
             }
         }
+
         image_del = image_del.filter((item, i, ar) => ar.indexOf(item) === i);
+        
     } else {
         image_del = [];
     }
@@ -738,7 +746,7 @@ router.post('/edit_post', cpUpload, verify, async (req, res) => {
 
     let post;
     try {
-        post = await Post.findById(id);
+        post = await Post.findById(id).populate("author");
     } catch (err) {
         if(err.kind == "ObjectId") {
             console.log("Sai id");
@@ -753,7 +761,8 @@ router.post('/edit_post', cpUpload, verify, async (req, res) => {
         return setAndSendResponse(res, responseError.POST_IS_NOT_EXISTED);
     }
 
-    if(post.author != user.id) {
+    console.log("post.author: ", post.author);
+    if(post.author != null && post.author != user.id) {
         console.log("Not Access");
         return setAndSendResponse(res, responseError.NOT_ACCESS);
     }
