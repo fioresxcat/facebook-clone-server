@@ -3,6 +3,7 @@ const User = require('../models/User');
 var {responseError, setAndSendResponse, callRes} = require('../response/error');
 
 module.exports = function (req, res, next) {
+    console.log('verify called')
     const token = req.query.token || req.body.token;
     console.log('token: ', token)
     if(token !== 0 && !token) {

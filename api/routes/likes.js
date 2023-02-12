@@ -56,7 +56,7 @@ router.post('/like', verify, async (req, res) => {
         for (let i = 0; i < updatedPost.likedUser.length; i++) {
             const user = await User.findById(updatedPost.likedUser[i]);
             if (user) {
-                likedUserNames.push(user.name);
+                likedUserNames.push(user.name ? user.name : 'facebook user');
             }
         }
 
@@ -65,6 +65,7 @@ router.post('/like', verify, async (req, res) => {
         code: "1000",
         message: "OK",
         data: {
+            id: updatedPost._id,
             like: updatedPost.likedUser.length.toString(),
             is_liked: updatedPost.likedUser.includes(user.id),
             likedUserNames: likedUserNames

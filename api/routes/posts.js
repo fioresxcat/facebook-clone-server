@@ -151,7 +151,7 @@ router.post('/get_list_videos', async (req, res) => {
                 is_blocked: is_blocked(user, post.author),
                 can_comment: "1",
                 can_edit: can_edit(user, post.author),
-                state: post.status ? post.status : null,
+                status: post.status ? post.status : null,
                 author: post.author ? {
                     id: post.author._id,
                     username: post.author.name ? post.author.name : null,
@@ -250,7 +250,14 @@ router.post('/get_list_posts', async (req, res) => {
     }
 
     data = {
-        posts: slicePosts.map(post => {
+        posts: slicePosts.map((post) => {
+            let is_liked = false
+            for (let i=0; i<post.likedUser.length; i++) {
+                if (post.likedUser[i]._id.toString() == user._id.toString()) {
+                    is_liked = true
+                    break
+                }
+            }
             return {
                 id: post._id,
                 image: post.image.length > 0 ? post.image.map(image => { return {id: image._id, url: image.url};}) : null,
@@ -262,13 +269,13 @@ router.post('/get_list_posts', async (req, res) => {
                 created: post.created.toString(),
                 modified: post.modified.toString(),
                 like: post.likedUser.length.toString(),
-                likedUserNames: post.likedUser.map(user => user.name ? user.name : 'unknown user'),
+                likedUserNames: post.likedUser.map(user => user.name ? user.name : 'facebook user'),
                 comment: post.comments.length.toString(),
-                is_liked: user ? (post.likedUser.includes(user._id) ? "1": "0") : "0",
+                is_liked: is_liked,
                 is_blocked: is_blocked(user, post.author),
                 can_comment: "1",
                 can_edit: can_edit(user, post.author),
-                state: post.status ? post.status : null,
+                status: post.status ? post.status : null,
                 author: post.author ? {
                     id: post.author._id,
                     username: post.author.name ? post.author.name : null,
@@ -346,7 +353,7 @@ router.post('/get_post', async (req, res) => {
                         name: post.author.name ? post.author.name : null,
                         avatar: post.author.avatar.url ? post.author.avatar.url: null
                     } : null,
-                    state: post.status ? post.status : null,
+                    status: post.status ? post.status : null,
                     is_blocked: is_blocked(user, post.author),
                     can_edit: can_edit(user, post.author),
                     can_comment: "1"
@@ -928,6 +935,7 @@ POST_IS_NOT_EXISTED
 */
 router.post('/report_post', verify, async (req, res) => {
     var {id, subject, details} = req.query;
+    console.log(id, subject, details)
     var user = req.user;
 
     // PARAMETER_IS_NOT_ENOUGH
@@ -943,7 +951,7 @@ router.post('/report_post', verify, async (req, res) => {
     }
 
     // PARAMETER_VALUE_IS_INVALID
-    if(!subjectArray[subject] || !subjectArray[subject].includes(details)) {
+    if(!subjectArray[subject]) {
         console.log("PARAMETER_VALUE_IS_INVALID");
         return setAndSendResponse(res, responseError.PARAMETER_VALUE_IS_INVALID);
     }
