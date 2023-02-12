@@ -390,10 +390,9 @@ function uploadFile(file) {
             contentType: file.mimetype,
         },
     });
-    const publicUrl =
-        `https://firebasestorage.googleapis.com/v0/b/${bucket.name}/o/${encodeURI(blob.name)}?alt=media`;
-    return new Promise((resolve, reject) => {
+    const publicUrl = `https://firebasestorage.googleapis.com/v0/b/${bucket.name}/o/${encodeURI(blob.name)}?alt=media`;
 
+    return new Promise((resolve, reject) => {
         blobStream.on('error', function(err) {
             reject(err);
         });
@@ -934,6 +933,7 @@ CAN_NOT_CONNECT_TO_DB neu truy van csdl that bai
 POST_IS_NOT_EXISTED
 */
 router.post('/report_post', verify, async (req, res) => {
+    console.log('report_post called')
     var {id, subject, details} = req.query;
     console.log(id, subject, details)
     var user = req.user;
@@ -993,6 +993,7 @@ router.post('/report_post', verify, async (req, res) => {
             post.reports_post.push(savedReportPost._id);
         }
         const savedPost = await post.save();
+        console.log("Report post success");
         return res.status(200).send({
             code: "1000",
             message: "OK"
