@@ -6,6 +6,9 @@ const UserSchema = new Schema({
         type: String,
         default: "Unnamed"
     },
+    birthDay: {
+        type: String
+    },
     phoneNumber: {
         type: String,
         required: true,

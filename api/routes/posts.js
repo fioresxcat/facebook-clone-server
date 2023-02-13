@@ -44,13 +44,25 @@ const subjectArray = {
 
 const categoryArray = ['0', '1'];
 
-// Create new storage instance with Firebase project credentials
-const storage = new Storage({ keyFilename:"social-network-9b13f-0321d923c18a.json"
-});
+// // Create new storage instance with Firebase project credentials
+// const storage = new Storage({ keyFilename:"social-network-9b13f-0321d923c18a.json"
+// });
 
+// // Create a bucket associated to Firebase storage bucket
+// const bucket =
+//     storage.bucket("social-netwfork-9b13f.appspot.com");
+
+// Create new storage instance with Firebase project credentials
+const storage = new Storage({
+    projectId: process.env.GCLOUD_PROJECT_ID,
+    credentials: {
+        private_key: process.env.private_key,
+        client_email: process.env.client_email
+    }
+  });
+  
 // Create a bucket associated to Firebase storage bucket
-const bucket =
-    storage.bucket("social-network-9b13f.appspot.com");
+const bucket = storage.bucket('social-network-9b13f.appspot.com');
 
 // Initiating a memory storage engine to store files as Buffer objects
 const uploader = multer({
@@ -389,8 +401,10 @@ function uploadFile(file) {
         metadata: {
             contentType: file.mimetype,
         },
+        predefinedAcl: 'publicRead'
     });
-    const publicUrl = `https://firebasestorage.googleapis.com/v0/b/${bucket.name}/o/${encodeURI(blob.name)}?alt=media`;
+    // const publicUrl = `https://firebasestorage.googleapis.com/v0/b/${bucket.name}/o/${encodeURI(blob.name)}?alt=media`;
+    const publicUrl =`https://storage.googleapis.com/${bucket.name}/${encodeURI(blob.name)}`;
 
     return new Promise((resolve, reject) => {
         blobStream.on('error', function(err) {
@@ -689,6 +703,9 @@ MAX_WORD_POST cua described
 */
 router.post('/edit_post', cpUpload, verify, async (req, res) => {
     console.log('edit post api called')
+    // console.log('req: ', req)
+    console.log('req.query: ', req.query)
+    console.log('req.files: ', req.files)
     var { id, status, image_del, image_sort, described, auto_accept, auto_block } = req.query;
     var image, video;
     if(req.files) {
@@ -697,6 +714,8 @@ router.post('/edit_post', cpUpload, verify, async (req, res) => {
     }
     var user = req.user;
 
+    console.log('image del: ', image_del)
+    console.log(typeof image_del)
     if(image_del) {
         try {
             image_del = JSON.parse(image_del);
@@ -849,7 +868,7 @@ router.post('/edit_post', cpUpload, verify, async (req, res) => {
             file = await Promise.all(promises);
             post.video = file[0];
         } catch (err) {
-            console.log("Upload fail");
+            console.log("Upload fail due to: ", err);
             return setAndSendResponse(res, responseError.UPLOAD_FILE_FAILED);
         }
     }
@@ -879,6 +898,8 @@ router.post('/edit_post', cpUpload, verify, async (req, res) => {
             return setAndSendResponse(res, responseError.MAXIMUM_NUMBER_OF_IMAGES);
         }
 
+        console.log('den doan update image roi day')
+        console.log('image: ', image)
         promises = image.map(item_image => {
             return uploadFile(item_image);
         });
@@ -886,10 +907,11 @@ router.post('/edit_post', cpUpload, verify, async (req, res) => {
         try {
             file = await Promise.all(promises);
             for(let file_item of file) {
+                console.log('file item: ', file_item)
                 post.image.push(file_item);
             }
         } catch (err) {
-            console.log("Upload fail");
+            console.log("Upload fail due to: ", err);
             return setAndSendResponse(res, responseError.UPLOAD_FILE_FAILED);
         }
     }
@@ -913,7 +935,13 @@ router.post('/edit_post', cpUpload, verify, async (req, res) => {
         const savedPost = await post.save();
         return res.status(200).send({
             code: "1000",
-            message: "OK"
+            message: "OK",
+            data: {
+                id: savedPost._id,
+                status: savedPost.status,
+                described: savedPost.described,
+                image: savedPost.image.length > 0 ? savedPost.image.map(image => { return {id: image._id, url: image.url};}) : null
+            }
         });
     } catch (err) {
         console.log("Edit fail");

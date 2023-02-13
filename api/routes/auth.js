@@ -17,18 +17,16 @@ const MAX_IMAGE_NUMBER = 4;
 const MAX_SIZE_IMAGE = 4 * 1024 * 1024; // for 4MB
 
 // Create new storage instance with Firebase project credentials
-
 const storage = new Storage({
   projectId: process.env.GCLOUD_PROJECT_ID,
   credentials: {
-    private_key: process.env.private_key,
-    client_email: process.env.client_email
+      private_key: process.env.private_key,
+      client_email: process.env.client_email
   }
 });
 
 // Create a bucket associated to Firebase storage bucket
-const bucket =
-  storage.bucket(process.env.GCLOUD_STORAGE_BUCKET_URL);
+const bucket = storage.bucket('social-network-9b13f.appspot.com');
 
 // Initiating a memory storage engine to store files as Buffer objects
 const uploader = multer({
@@ -51,14 +49,14 @@ const LCS = require('../utils/LCS');
 // "password": "nguyen123"
 //}
 router.post('/signup', async (req, res) => {
-  const { password } = req.query;
-  const phoneNumber = req.query.phonenumber;
-  const name = req.query.name;
+  console.log('req.qeury in signup api: ', req.query)
+  const { password, name, birthDay } = req.query;
+  let phoneNumber = req.query.phonenumber;
 
-  if (phoneNumber === undefined || password === undefined) {
+  if (phoneNumber === undefined || password === undefined || name === undefined || birthDay === undefined) {
     return callRes(res, responseError.PARAMETER_IS_NOT_ENOUGH, 'phoneNumber, password');
   }
-  if (typeof phoneNumber != 'string' || typeof password != 'string') {
+  if (typeof phoneNumber != 'string' || typeof password != 'string' || typeof name != 'string' || typeof birthDay != 'string') {
     return callRes(res, responseError.PARAMETER_TYPE_IS_INVALID, 'phoneNumber, password');
   }
   if (!validInput.checkPhoneNumber(phoneNumber)) {
@@ -75,6 +73,7 @@ router.post('/signup', async (req, res) => {
     if (user) return callRes(res, responseError.USER_EXISTED);
     const newUser = new User({
       name,
+      birthDay,
       phoneNumber,
       password,
       verifyCode: random4digit(),
@@ -96,6 +95,8 @@ router.post('/signup', async (req, res) => {
 
           let data = {
             id: saved.id,
+            name: saved.name,
+            birthDay: saved.birthDay,
             phoneNumber: saved.phoneNumber,
             verifyCode: saved.verifyCode,
             isVerified: saved.isVerified
@@ -234,6 +235,7 @@ router.post('/check_verify_code', async (req, res) => {
 // @desc   login
 // @access Public
 router.post('/login', async (req, res) => {
+  console.log('login api called with: ', req.query)
   const { password } = req.query;
   let phoneNumber = req.query.phonenumber;
   if (phoneNumber === undefined || password === undefined) {
@@ -375,6 +377,7 @@ router.post("/change_info_after_signup", verify, uploader.single('avatar'), asyn
   // do what you want
   // Validation
   let code, message;
+  console.log('req.file in change_info_after_signup', req.file);
   if (req.query.username === undefined) {
     return callRes(res, responseError.PARAMETER_IS_NOT_ENOUGH, 'username');
   }
@@ -403,9 +406,9 @@ router.post("/change_info_after_signup", verify, uploader.single('avatar'), asyn
          let id = req.user.id;
          var user = await User.findById(id);
 
-         if (user.name !== undefined){
-             return callRes(res, responseError.ACTION_HAS_BEEN_DONE_PREVIOUSLY_BY_THIS_USER);
-         }
+        //  if (user.name !== undefined){
+        //      return callRes(res, responseError.ACTION_HAS_BEEN_DONE_PREVIOUSLY_BY_THIS_USER);
+        //  }
 
          user.name = req.query.username;
          let promise = await uploadFile(req.file);
@@ -419,7 +422,7 @@ router.post("/change_info_after_signup", verify, uploader.single('avatar'), asyn
                  username: user.name,
                  phonenumber: user.phoneNumber,
                  created: String(Math.floor(user.registerDate / 1000)),
-                 avatar: user.avatar.url
+                 avatar_url: user.avatar.url
              }
          }
          res.json({ code, message, data });
@@ -429,9 +432,9 @@ router.post("/change_info_after_signup", verify, uploader.single('avatar'), asyn
         let id = req.user.id;
         var user = await User.findById(id);
 
-        if (user.name !== undefined){
-            return callRes(res, responseError.ACTION_HAS_BEEN_DONE_PREVIOUSLY_BY_THIS_USER);
-        }
+        // if (user.name !== undefined){
+        //     return callRes(res, responseError.ACTION_HAS_BEEN_DONE_PREVIOUSLY_BY_THIS_USER);
+        // }
 
         user.name = req.query.username;
         user.save();
@@ -443,7 +446,7 @@ router.post("/change_info_after_signup", verify, uploader.single('avatar'), asyn
                 username: user.name,
                 phonenumber: user.phoneNumber,
                 created: String(Math.floor(user.registerDate / 1000)),
-                avatar: null
+                avatar_url: null
             }
         }
         res.json({ code, message, data });
@@ -488,8 +491,9 @@ function uploadFile(file) {
           contentType: file.mimetype,
       },
   });
-  const publicUrl =
-      `https://firebasestorage.googleapis.com/v0/b/${bucket.name}/o/${encodeURI(blob.name)}?alt=media`;
+  // const publicUrl = `https://firebasestorage.googleapis.com/v0/b/${bucket.name}/o/${encodeURI(blob.name)}?alt=media`;
+  const publicUrl =`https://storage.googleapis.com/${bucket.name}/${encodeURI(blob.name)}`;
+
   return new Promise((resolve, reject) => {
 
       blobStream.on('error', function(err) {
