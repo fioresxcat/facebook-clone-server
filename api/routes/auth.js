@@ -236,8 +236,10 @@ router.post('/check_verify_code', async (req, res) => {
 // @access Public
 router.post('/login', async (req, res) => {
   console.log('login api called with: ', req.query)
+
   const { password } = req.query;
   let phoneNumber = req.query.phonenumber;
+
   if (phoneNumber === undefined || password === undefined) {
     return callRes(res, responseError.PARAMETER_IS_NOT_ENOUGH, 'phoneNumber, password');
   }
@@ -274,6 +276,7 @@ router.post('/login', async (req, res) => {
                 id: loginUser.id,
                 username: (loginUser.name) ? loginUser.name : null,
                 token: token,
+                birthDay: loginUser.birthDay ? loginUser.birthDay : null,
                 avatar: (loginUser.avatar.url) ? loginUser.avatar.url : null,
                 active: null
               }
