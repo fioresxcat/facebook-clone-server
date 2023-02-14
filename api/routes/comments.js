@@ -231,6 +231,18 @@ router.post('/get_comment', async (req, res) => {
     }
 });
 
+router.post('/delete_comments', async (req, res) => {
+    // delete all comments in database
+    try {
+        await Comment.deleteMany({});
+        return setAndSendResponse(res, responseError.OK);
+    }
+    catch (err) {
+        console.log(err);
+        return setAndSendResponse(res, responseError.CAN_NOT_CONNECT_TO_DB);
+    }
+})
+
 function is_blocked(user, author) {
     if(user && author && author.blockedList && author.blockedList.findIndex((element) => {return element.user.toString() == user._id.toString()}) != -1) return "1";
     if(user && author && user.blockedList && user.blockedList.findIndex((element) => {return element.user.toString() == author._id.toString()}) != -1) return "1";

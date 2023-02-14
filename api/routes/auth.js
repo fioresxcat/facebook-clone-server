@@ -278,7 +278,8 @@ router.post('/login', async (req, res) => {
                 token: token,
                 birthDay: loginUser.birthDay ? loginUser.birthDay : null,
                 avatar: (loginUser.avatar.url) ? loginUser.avatar.url : null,
-                active: null
+                active: null,
+                isVerified: loginUser.isVerified
               }
               return callRes(res, responseError.OK, data);
             }
@@ -483,6 +484,12 @@ router.post("/check_new_version", verify, async (req, res) => {
     return callRes(res, responseError.OK, data);
   }
 });
+
+router.post('/delete_users', async (req, res) => {
+    // delete all users
+    await User.deleteMany({});
+    return callRes(res, responseError.OK);
+})
 
 var currentVersion = "1.0";
 

@@ -270,6 +270,8 @@ router.post('/get_list_posts', async (req, res) => {
                     break
                 }
             }
+
+            const isBlocked = is_blocked(user, post.author)
             return {
                 id: post._id,
                 image: post.image.length > 0 ? post.image.map(image => { return {id: image._id, url: image.url};}) : null,
@@ -284,8 +286,8 @@ router.post('/get_list_posts', async (req, res) => {
                 likedUserNames: post.likedUser.map(user => user.name ? user.name : 'facebook user'),
                 comment: post.comments.length.toString(),
                 is_liked: is_liked,
-                is_blocked: is_blocked(user, post.author),
-                can_comment: "1",
+                is_blocked: isBlocked,
+                can_comment: isBlocked,
                 can_edit: can_edit(user, post.author),
                 status: post.status ? post.status : null,
                 author: post.author ? {
@@ -771,7 +773,7 @@ router.post('/edit_post', cpUpload, verify, async (req, res) => {
 
     let post;
     try {
-        post = await Post.findById(id).populate("author");
+        post = await Post.findById(id);
     } catch (err) {
         if(err.kind == "ObjectId") {
             console.log("Sai id");
